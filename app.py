@@ -11,12 +11,18 @@ app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'sqlite:///instance/dealership.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
+
 # Initialize DB and schemas
 db.init_app(app)
+with app.app_context():
+    db.create_all()
 car_schema = CarSchema()
 cars_schema = CarSchema(many=True)
 
 # -------------------- CRUD Endpoints -------------------- #
+@app.route('/health')
+def health():
+    return {"ok": True}, 200
 
 @app.route('/cars', methods=['GET'])
 def get_cars():
