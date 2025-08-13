@@ -8,7 +8,7 @@ import atexit
 import os
 
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'sqlite:///instance/dealership.db')
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///cars.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 
