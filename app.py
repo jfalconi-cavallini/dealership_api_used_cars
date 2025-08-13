@@ -1,8 +1,8 @@
 from flask import Flask, jsonify, request
 from models import db, Car
 from schemas import CarSchema
-import scraper              # existing NEW cars scraper (your scraper.py)
-import used_scraper         # your USED cars scraper (used_scraper.py)
+import scraper
+import used_scraper
 from apscheduler.schedulers.background import BackgroundScheduler
 import atexit
 import os
