@@ -1,6 +1,6 @@
 # ClayCooley Car Inventory REST API
 
-A full-featured REST API that scrapes live car inventory data from [Clay Cooley](https://www.claycooley.com/) and provides endpoints for CRUD operations. The API also supports scheduled daily updates to keep the inventory current.
+A full-featured REST API that scrapes live used car inventory data from [Clay Cooley](https://www.claycooley.com/) and provides endpoints for CRUD operations. The API also supports scheduled daily updates to keep the inventory current.
 
 ## 🔗 Live Demo
 

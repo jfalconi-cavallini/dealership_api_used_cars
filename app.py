@@ -1,7 +1,6 @@
 from flask import Flask, jsonify, request
 from models import db, Car
 from schemas import CarSchema
-import scraper
 import used_scraper
 from apscheduler.schedulers.background import BackgroundScheduler
 import atexit
@@ -11,14 +10,12 @@ app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///cars.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-# Initialize DB and schemas
 db.init_app(app)
 with app.app_context():
     db.create_all()
 car_schema = CarSchema()
 cars_schema = CarSchema(many=True)
 
-# -------------------- CRUD Endpoints -------------------- #
 @app.route('/health')
 def health():
     return {"ok": True}, 200
@@ -67,8 +64,16 @@ def delete_car(car_id):
     db.session.commit()
     return jsonify({"message": "Car deleted"})
 
-# -------------------- Scraper Helper -------------------- #
+# -------------------- Safe DB Add -------------------- #
+def safe_int(val, default=0):
+    """Convert val to int, return default if conversion fails"""
+    try:
+        return int(val)
+    except (TypeError, ValueError):
+        return default
+
 def add_cars_to_db(cars_list):
+    """Add a list of car dicts to the database safely."""
     count_added = 0
     for car_data in cars_list:
         vin = car_data.get('vin')
@@ -76,37 +81,33 @@ def add_cars_to_db(cars_list):
             existing_car = Car.query.filter_by(vin=vin).first()
         else:
             existing_car = Car.query.filter_by(
-                make=car_data['make'],
-                model=car_data['model'],
-                year=int(car_data['year'])
+                make=car_data.get('make', ''),
+                model=car_data.get('model', ''),
+                year=safe_int(car_data.get('year', 0))
             ).first()
 
         if existing_car:
             continue
 
         new_car = Car(
-            make=car_data['make'],
-            model=car_data['model'],
-            year=int(car_data['year']),
+            make=car_data.get('make', ''),
+            model=car_data.get('model', ''),
+            year=safe_int(car_data.get('year', 0)),
             price=float(car_data.get('price', 0)),
-            mileage=int(car_data.get('mileage', 0)),
+            mileage=safe_int(car_data.get('mileage', 0)),
             status='available',
             vin=vin,
             image_url=car_data.get('image_url'),
             link=car_data.get('link')
         )
+
         db.session.add(new_car)
         count_added += 1
+
     db.session.commit()
+    print(f"{count_added} cars added to the database.")
     return count_added
 
-# -------------------- Scraper Endpoints -------------------- #
-@app.route('/scrape', methods=['POST'])
-def run_scraper_new():
-    base_url = 'https://www.claycooley.com/inventory/new-cars/'
-    cars = scraper.scrape_all_new_cars(base_url)
-    count_added = add_cars_to_db(cars)
-    return jsonify({"message": f"{count_added} new cars added."})
 
 @app.route('/scrape/used', methods=['POST'])
 def run_scraper_used():
@@ -122,8 +123,10 @@ def scheduled_scrape(func):
         print(f"Scheduled scraping added {count_added} cars.")
 
 scheduler = BackgroundScheduler()
-scheduler.add_job(lambda: scheduled_scrape(lambda: scraper.scrape_all_new_cars('https://www.claycooley.com/inventory/new-cars/')), trigger='interval', hours=24)
-scheduler.add_job(lambda: scheduled_scrape(lambda: used_scraper.scrape_all_used_cars('https://www.claycooley.com/inventory/used-vehicles/')), trigger='interval', hours=24)
+scheduler.add_job(lambda: scheduled_scrape(
+    lambda: used_scraper.scrape_all_used_cars('https://www.claycooley.com/inventory/used-vehicles/')), 
+    trigger='interval', hours=24
+)
 scheduler.start()
 atexit.register(lambda: scheduler.shutdown())
 

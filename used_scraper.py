@@ -90,13 +90,17 @@ def scrape_inventory_page(url):
                 msrp_price = parse_price(m_price.group(0))
 
             # Mileage
+            
             mileage = 0
-            if info_ps:
-                for p_tag in info_ps:
+            widget_containers = block.select('div.elementor-widget-container')
+            for container in widget_containers:
+                p_tag = container.find('p', class_='elementor-heading-title')
+                if p_tag:
                     text = p_tag.get_text(strip=True)
-                    if re.match(r'^[\d,]+\s*mi\.?$', text.lower()):
-                        mileage = parse_mileage(text)
-                        break
+                    m_mileage = re.search(r'([\d,]+)\s*(mi|miles)\.?', text, flags=re.I)
+                    if m_mileage:
+                        mileage = parse_mileage(m_mileage.group(1))
+                        break  # stop at first match
 
             cars.append({
                 'year': year,
@@ -110,6 +114,7 @@ def scrape_inventory_page(url):
             })
 
     return cars
+
 
 def get_total_pages(url):
     headers = {'User-Agent': 'Mozilla/5.0 (compatible; CarInventoryScraper/1.0)'}
@@ -132,7 +137,7 @@ def get_total_pages(url):
     return max(page_numbers) if page_numbers else 1
 
 def scrape_all_used_cars(base_url):
-    total_pages = 50  # get_total_pages(base_url)
+    total_pages = get_total_pages(base_url)
     print(f"Total pages found: {total_pages}")
 
     all_cars = []
