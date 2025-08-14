@@ -13,6 +13,13 @@ def parse_price(price_str):
     except:
         return 0.0
 
+def parse_mileage(mileage_str):
+    """Convert '127,000 mi.' -> 127000 as integer"""
+    if mileage_str:
+        number = re.sub(r'[^\d]', '', mileage_str)  # remove commas and non-digit chars
+        return int(number) if number.isdigit() else 0
+    return 0
+
 def scrape_inventory_page(url):
     headers = {
         'User-Agent': 'Mozilla/5.0 (compatible; CarInventoryScraper/1.0)'
@@ -26,11 +33,9 @@ def scrape_inventory_page(url):
     cars = []
     seen_links = set()  # avoid duplicates
 
-    # iterate "div.elementor-widget-wrap" blocks
     car_blocks = soup.select('div.elementor-widget-wrap')
 
     for block in car_blocks:
-        # Same selector for the two H2 links inside each block
         a_tags = block.select('h2.elementor-heading-title a')
         if len(a_tags) >= 2:
             year_make = a_tags[0].get_text(strip=True)
@@ -41,7 +46,6 @@ def scrape_inventory_page(url):
                 continue
             seen_links.add(link)
 
-            # Used SRP starts with "Used "
             if year_make.startswith("Used "):
                 year_make = year_make[len("Used "):]
 
@@ -49,24 +53,21 @@ def scrape_inventory_page(url):
             year = parts[0] if len(parts) > 0 else ''
             make = parts[1] if len(parts) > 1 else ''
 
-            # scan the same class of <p> tags inside the block and grab the one that starts with "VIN:"
+            # VIN
             vin = ''
             info_ps = block.select('div.elementor-widget-container > p.elementor-heading-title.elementor-size-default')
             if info_ps:
                 for p_tag in info_ps:
                     text = p_tag.get_text(strip=True)
-                    # On used pages, VIN is one clean line like "VIN: 1C3CDZAB5CN110236"
                     if text.startswith("VIN:"):
                         vin = text.replace("VIN:", "").strip()
                         break
-
-            # If VIN still missing, parse it from the URL (/vehicle/<VIN>/...)
             if not vin:
                 m = re.search(r'/vehicle/([A-HJ-NPR-Z0-9]{11,17})/', link, flags=re.I)
                 if m:
                     vin = m.group(1)
 
-            # Image handling :tries data-auto5-image, then <img src>
+            # Image
             img_div = block.select_one('div.elementor-image')
             if img_div and img_div.has_attr('data-auto5-image'):
                 image_url = img_div['data-auto5-image']
@@ -88,15 +89,24 @@ def scrape_inventory_page(url):
             if m_price:
                 msrp_price = parse_price(m_price.group(0))
 
+            # Mileage
+            mileage = 0
+            if info_ps:
+                for p_tag in info_ps:
+                    text = p_tag.get_text(strip=True)
+                    if re.match(r'^[\d,]+\s*mi\.?$', text.lower()):
+                        mileage = parse_mileage(text)
+                        break
+
             cars.append({
-                'condition': 'Used',
                 'year': year,
                 'make': make,
                 'model': model,
                 'vin': vin,
                 'link': link,
                 'image_url': image_url,
-                'price': msrp_price
+                'price': msrp_price,
+                'mileage': mileage
             })
 
     return cars
@@ -109,11 +119,8 @@ def get_total_pages(url):
         return 1
 
     soup = BeautifulSoup(response.text, 'html.parser')
-
     pager_div = soup.find('div', class_='pager-body pager-body-full', attrs={'data-event': 'click_pagination'})
-
     if not pager_div:
-        print("Pagination div not found, assuming 1 page")
         return 1
 
     page_numbers = []
@@ -125,7 +132,7 @@ def get_total_pages(url):
     return max(page_numbers) if page_numbers else 1
 
 def scrape_all_used_cars(base_url):
-    total_pages = 10  # get_total_pages(base_url)
+    total_pages = 50  # get_total_pages(base_url)
     print(f"Total pages found: {total_pages}")
 
     all_cars = []
@@ -138,7 +145,6 @@ def scrape_all_used_cars(base_url):
     return all_cars
 
 def scrape_and_save():
-    """Run the scraper and save results to scraped_cars.json (same filename pattern)"""
     base_url = 'https://www.claycooley.com/inventory/used-vehicles/'
     all_used_cars = scrape_all_used_cars(base_url)
     print(f"Total used cars scraped: {len(all_used_cars)}")

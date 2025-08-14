@@ -8,7 +8,7 @@ class Car(db.Model):
     model = db.Column(db.String(50), nullable=False)
     year = db.Column(db.Integer, nullable=False)
     price = db.Column(db.Float, nullable=False)
-    mileage = db.Column(db.Integer, nullable=False, default=0)
+    mileage = db.Column(db.Integer, nullable=False, default=0)  # store mileage as integer
     status = db.Column(db.String(20), nullable=False, default='available')
     vin = db.Column(db.String(100), unique=True, nullable=True)
     image_url = db.Column(db.String(255), nullable=True)

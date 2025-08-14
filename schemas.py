@@ -6,8 +6,8 @@ class CarSchema(Schema):
     model = fields.Str(required=True)
     year = fields.Int(required=True)
     price = fields.Float(required=True)
-    mileage = fields.Int()
-    status = fields.Str()
+    mileage = fields.Int(load_default=0)  # default 0 if not provided
+    status = fields.Str(load_default='available')
     vin = fields.Str()
     image_url = fields.Str()
     link = fields.Str()
