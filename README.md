@@ -4,7 +4,7 @@ A full-featured REST API that scrapes live car inventory data from [Clay Cooley]
 
 ## 🔗 Live Demo
 
-Try the API in action (GET all cars): https://dealershipapi-production.up.railway.app/cars
+Try the API in action (GET all cars): https://web-production-bf935.up.railway.app/cars
 
 ---
 
