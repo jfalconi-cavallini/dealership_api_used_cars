@@ -90,7 +90,6 @@ def scrape_inventory_page(url):
                 msrp_price = parse_price(m_price.group(0))
 
             # Mileage
-            
             mileage = 0
             widget_containers = block.select('div.elementor-widget-container')
             for container in widget_containers:
@@ -102,6 +101,17 @@ def scrape_inventory_page(url):
                         mileage = parse_mileage(m_mileage.group(1))
                         break  # stop at first match
 
+            # Colors (Exterior & Interior)
+            exterior_color = None
+            interior_color = None
+            color_blocks = block.select('div.color-row-root .color-row-label')
+            for color_div in color_blocks:
+                label_text = color_div.get_text(strip=True)
+                if label_text.lower().startswith("ext:"):
+                    exterior_color = label_text.replace("Ext:", "").strip()
+                elif label_text.lower().startswith("int:"):
+                    interior_color = label_text.replace("Int:", "").strip()
+
             cars.append({
                 'year': year,
                 'make': make,
@@ -110,7 +120,9 @@ def scrape_inventory_page(url):
                 'link': link,
                 'image_url': image_url,
                 'price': msrp_price,
-                'mileage': mileage
+                'mileage': mileage,
+                'exterior_color': exterior_color,
+                'interior_color': interior_color
             })
 
     return cars
@@ -137,7 +149,7 @@ def get_total_pages(url):
     return max(page_numbers) if page_numbers else 1
 
 def scrape_all_used_cars(base_url):
-    total_pages = get_total_pages(base_url)
+    total_pages = 50 #get_total_pages(base_url)
     print(f"Total pages found: {total_pages}")
 
     all_cars = []

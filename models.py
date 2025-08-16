@@ -13,3 +13,7 @@ class Car(db.Model):
     vin = db.Column(db.String(100), unique=True, nullable=True)
     image_url = db.Column(db.String(255), nullable=True)
     link = db.Column(db.String(500), nullable=True)
+    
+    # new fields for colors
+    exterior_color = db.Column(db.String(50), nullable=True)
+    interior_color = db.Column(db.String(50), nullable=True)

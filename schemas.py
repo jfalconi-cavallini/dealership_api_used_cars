@@ -11,3 +11,5 @@ class CarSchema(Schema):
     vin = fields.Str()
     image_url = fields.Str()
     link = fields.Str()
+    exterior_color = fields.Str()
+    interior_color = fields.Str()

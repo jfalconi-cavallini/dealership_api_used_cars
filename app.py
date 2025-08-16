@@ -42,11 +42,14 @@ def add_car():
         status=data.get('status', 'available'),
         vin=data.get('vin'),
         image_url=data.get('image_url'),
-        link=data.get('link')
+        link=data.get('link'),
+        exterior_color=data.get('exterior_color'),
+        interior_color=data.get('interior_color')
     )
     db.session.add(new_car)
     db.session.commit()
     return jsonify(car_schema.dump(new_car)), 201
+
 
 @app.route('/cars/<int:car_id>', methods=['PUT'])
 def update_car(car_id):
@@ -98,8 +101,11 @@ def add_cars_to_db(cars_list):
             status='available',
             vin=vin,
             image_url=car_data.get('image_url'),
-            link=car_data.get('link')
+            link=car_data.get('link'),
+            exterior_color=car_data.get('exterior_color'),
+            interior_color=car_data.get('interior_color')
         )
+
 
         db.session.add(new_car)
         count_added += 1
