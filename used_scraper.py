@@ -149,7 +149,7 @@ def get_total_pages(url):
     return max(page_numbers) if page_numbers else 1
 
 def scrape_all_used_cars(base_url):
-    total_pages = 50 #get_total_pages(base_url)
+    total_pages = get_total_pages(base_url)
     print(f"Total pages found: {total_pages}")
 
     all_cars = []
